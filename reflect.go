@@ -6,45 +6,55 @@ import (
 	"strings"
 )
 
-func buildMap(s string, r *CurrentConditions) error {
+func buildMap(s string, r *CurrentConditions, jsonTags bool) {
 	m := make(map[string]string)
 	v := reflect.ValueOf(m)
 	resWeather := r.CurrentWeather
 	vW := reflect.ValueOf(resWeather)
+	tW := reflect.TypeOf(resWeather)
 
 	for _, kv := range strings.Split(s, ",") {
 		// Try to directly lookup by field name
 		f := vW.FieldByName(kv)
+		t, _ := tW.FieldByName(kv)
 		if f.IsValid() {
-			v.SetMapIndex(reflect.ValueOf(kv), f)
+			if jsonTags {
+				v.SetMapIndex(reflect.ValueOf(t.Tag.Get("json")), f)
+			} else {
+				v.SetMapIndex(reflect.ValueOf(kv), f)
+			}
 		}
 
 		// Try to lookup through JSON tags
-		reflectRecursive(&resWeather, &kv, v)
+		reflectRecursive(&resWeather, &kv, v, jsonTags)
 	}
 
 	fmt.Printf("%q\n", m)
-	return nil
 }
 
-func reflectRecursive(s interface{}, tagName *string, v reflect.Value) {
+func reflectRecursive(s interface{}, tagName *string, v reflect.Value, jsonTags bool) {
 	rType := reflect.TypeOf(s).Elem()
 	rValue := reflect.ValueOf(s).Elem()
 
 	for i := 0; i < rType.NumField(); i++ {
 		tName := rType.Field(i).Name
+		tTag := rType.Field(i).Tag
 		vValue := rValue.Field(i).Interface()
 		vAddr := rValue.Field(i).Addr()
 
 		switch rValue.Field(i).Kind() {
 		case reflect.Struct:
-			reflectRecursive(vAddr.Interface(), tagName, v)
+			reflectRecursive(vAddr.Interface(), tagName, v, jsonTags)
 		case reflect.Ptr:
-			reflectRecursive(vValue, tagName, v)
+			reflectRecursive(vValue, tagName, v, jsonTags)
 		default:
 			if tag, ok := rValue.Type().Field(i).Tag.Lookup("json"); ok && tag == *tagName {
 				s := fmt.Sprintf("%v", vValue)
-				v.SetMapIndex(reflect.ValueOf(tName), reflect.ValueOf(s))
+				if jsonTags {
+					v.SetMapIndex(reflect.ValueOf(tTag.Get("json")), reflect.ValueOf(s))
+				} else {
+					v.SetMapIndex(reflect.ValueOf(tName), reflect.ValueOf(s))
+				}
 			}
 		}
 	}

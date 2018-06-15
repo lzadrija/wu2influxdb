@@ -20,6 +20,7 @@ func main() {
 	pwsName := flag.String("PWSName", "", "PWS Name")
 	fieldList := flag.String("FieldList", "", "List of WU attributes")
 	debug := flag.Bool("Debug", false, "Dump all WU API responses")
+	jsonTags := flag.Bool("JsonTags", true, "Use JSON Tags for InfluxDB fields")
 	flag.Parse()
 
 	if *apiKey == "" || *pwsName == "" {
@@ -46,7 +47,7 @@ func main() {
 	}
 
 	if *fieldList != "" {
-		buildMap(*fieldList, &res.WeatherMessage)
+		buildMap(*fieldList, &res.WeatherMessage, *jsonTags)
 	}
 
 	if *debug {
