@@ -5,8 +5,9 @@ import (
 
 	"flag"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"os"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 type WeatherResult struct {
@@ -17,10 +18,12 @@ type WeatherResult struct {
 func main() {
 	apiKey := flag.String("APIKey", "", "WeatherUnderground API key")
 	pwsName := flag.String("PWSName", "", "PWS Name")
+	fieldList := flag.String("FieldList", "", "List of WU attributes")
+	debug := flag.Bool("Debug", false, "Dump all WU API responses")
 	flag.Parse()
 
 	if *apiKey == "" || *pwsName == "" {
-		fmt.Fprintf(os.Stderr, "Invalid number of arguments. All parameters are mandatory. Usage:\n")
+		fmt.Fprintf(os.Stderr, "Invalid number of arguments. APIKey and PWSName are mandatory arguments. Usage:\n")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -32,6 +35,7 @@ func main() {
 
 	ch := make(chan *WeatherResult)
 	go func() {
+		defer close(ch)
 		cond, err := wuClient.GetConditions()
 		ch <- &WeatherResult{cond, err}
 	}()
@@ -41,5 +45,11 @@ func main() {
 		log.Fatal(res.Error)
 	}
 
-	spew.Dump(res.WeatherMessage)
+	if *fieldList != "" {
+		buildMap(*fieldList, &res.WeatherMessage)
+	}
+
+	if *debug {
+		spew.Dump(res.WeatherMessage)
+	}
 }
