@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-func buildMap(s string, r *CurrentConditions, jsonTags bool) {
-	m := make(map[string]string)
+func buildMap(s string, r *CurrentConditions, jsonTags bool) map[string]interface{} {
+	m := make(map[string]interface{})
 	v := reflect.ValueOf(m)
 	resWeather := r.CurrentWeather
 	vW := reflect.ValueOf(resWeather)
@@ -28,7 +28,8 @@ func buildMap(s string, r *CurrentConditions, jsonTags bool) {
 		reflectRecursive(&resWeather, &kv, v, &jsonTags)
 	}
 
-	fmt.Printf("%q\n", m)
+	m["observation_epoch"] = resWeather.ObservationEpoch
+	return m
 }
 
 func reflectRecursive(s interface{}, tagName *string, v reflect.Value, jsonTags *bool) {

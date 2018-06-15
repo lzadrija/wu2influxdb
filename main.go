@@ -21,10 +21,15 @@ func main() {
 	fieldList := flag.String("FieldList", "", "List of WU attributes")
 	debug := flag.Bool("Debug", false, "Dump all WU API responses")
 	jsonTags := flag.Bool("JsonTags", true, "Use JSON Tags for InfluxDB fields")
+	influxDBHost := flag.String("InfluxDBHost", "http://localhost:8086", "InfluxDB host name")
+	influxDBName := flag.String("InfluxDBName", "weather", "InfluxDB database name")
+	influxDBUser := flag.String("InfluxDBUser", "", "InfluxDB username")
+	influxDBPassword := flag.String("InfluxDBPassword", "", "InfluxDB password")
+
 	flag.Parse()
 
-	if *apiKey == "" || *pwsName == "" {
-		fmt.Fprintf(os.Stderr, "Invalid number of arguments. APIKey and PWSName are mandatory arguments. Usage:\n")
+	if *apiKey == "" || *pwsName == "" || *fieldList == "" {
+		fmt.Fprintf(os.Stderr, "Invalid number of arguments. APIKey, PWSName, fieldList are mandatory arguments. Usage:\n")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -46,11 +51,19 @@ func main() {
 		log.Fatal(res.Error)
 	}
 
-	if *fieldList != "" {
-		buildMap(*fieldList, &res.WeatherMessage, *jsonTags)
-	}
-
 	if *debug {
+		fmt.Printf("Dumping WU API response structure")
 		spew.Dump(res.WeatherMessage)
 	}
+
+	f := buildMap(*fieldList, &res.WeatherMessage, *jsonTags)
+
+	if *debug {
+		fmt.Printf("Dumping InfluxDB fields structure: %q\n", f)
+	}
+
+	c := InfluxDBClient(influxDBHost, influxDBUser, influxDBPassword)
+	defer c.Close()
+
+	InfluxDBPublishPoints(c, influxDBName, f, pwsName)
 }
