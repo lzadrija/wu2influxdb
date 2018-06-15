@@ -18,9 +18,23 @@ const (
 // WU API Conditions Response
 type CurrentConditions struct {
 	CurrentWeather WeatherResponse `json:"current_observation"`
+	Response       Response        `json:"response"`
 }
 
-//
+// WU API Status Response
+type Response struct {
+	TermsOfService string        `json:"termsofService"`
+	Version        string        `json:"version"`
+	ErrorResponse  ErrorResponse `json:"error"`
+}
+
+// WU API Error Response
+type ErrorResponse struct {
+	Type        string `json:"type"`
+	Description string `json:"description"`
+}
+
+// WU API Observation Response
 type WeatherResponse struct {
 	ObservationLocation ObservationLocation `json:"observation_location"`
 	DisplayLocation     DisplayLocation     `json:"display_location"`
@@ -156,20 +170,28 @@ func (c *Client) GetConditions() (CurrentConditions, error) {
 	}
 	defer resp.Body.Close()
 
+	// Fetch whole body at once
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return CurrentConditions{}, err
 	}
 
-	fmt.Print(string(body))
-
+	// Handle HTTP errors
 	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
 		var err = fmt.Errorf(string(body))
 		return CurrentConditions{}, err
 	}
 
+	// Parse JSON
 	cond := CurrentConditions{}
 	json.Unmarshal(body, &cond)
+
+	// Handle WU API Errors
+	errRes := cond.Response.ErrorResponse
+	if errRes.Type != "" || errRes.Description != "" {
+		return cond, fmt.Errorf("Got error from WeatherUnderground: Type \"%s\", Description \"%s\"\n",
+			errRes.Type, errRes.Description)
+	}
 
 	return cond, nil
 }
