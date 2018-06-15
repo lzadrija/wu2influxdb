@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	WuApiPWSURL         = "http://api.wunderground.com/api/%s/conditions/q/pws:%s.json"
-	DefaultWuApiTimeout = time.Second * 15
+	WuAPIPWSURL         = "http://api.wunderground.com/api/%s/conditions/q/pws:%s.json"
+	DefaultWuAPITimeout = time.Second * 15
 )
 
 // WU API Conditions Response
@@ -42,6 +42,7 @@ type WeatherResponse struct {
 	*Temperature
 	*Precipitation
 	*Wind
+	*Windchill
 	*Dewpoint
 	*Pressure
 	*Solar
@@ -79,9 +80,9 @@ type Temperature struct {
 	Description         string  `json:"temperature_string"`
 	HeatIndexString     string  `json:"heat_index_string"`
 	Fahrenheit          float32 `json:"temp_f"`
+	Celsius             float32 `json:"temp_c"`
 	FeelsLikeFahrenheit string  `json:"feelslike_f"`
 	HeatIndexFahrenheit string  `json:"heat_index_f"`
-	Celsius             float32 `json:"temp_c"`
 	FeelsLikeCelsius    string  `json:"feelslike_c"`
 	HeatIndexCelsius    string  `json:"heat_index_c"`
 }
@@ -104,13 +105,12 @@ type Wind struct {
 	GustMPH     string  `json:"wind_gust_mph"`
 	KPH         float32 `json:"wind_kph"`
 	GustKPH     string  `json:"wind_gust_kph"`
-	*Windchill
 }
 
 type Windchill struct {
-	Description string  `json:"windchill_string"`
-	Fahrenheit  float32 `json:"windchill_f"`
-	Celsius     float32 `json:"windchill_c"`
+	Description string `json:"windchill_string"`
+	Fahrenheit  string `json:"windchill_f"`
+	Celsius     string `json:"windchill_c"`
 }
 
 type Dewpoint struct {
@@ -148,12 +148,12 @@ type Client struct {
 
 // Prepare HTTP client structure for WU API request
 func NewClient(PWSName string, APIKey string) (*Client, error) {
-	wuURL, err := url.Parse(fmt.Sprintf(WuApiPWSURL, APIKey, PWSName))
+	wuURL, err := url.Parse(fmt.Sprintf(WuAPIPWSURL, APIKey, PWSName))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	c := &Client{httpClient: &http.Client{Timeout: DefaultWuApiTimeout}, wuURL: wuURL}
+	c := &Client{httpClient: &http.Client{Timeout: DefaultWuAPITimeout}, wuURL: wuURL}
 	return c, nil
 }
 
@@ -184,12 +184,15 @@ func (c *Client) GetConditions() (CurrentConditions, error) {
 
 	// Parse JSON
 	cond := CurrentConditions{}
-	json.Unmarshal(body, &cond)
+	err = json.Unmarshal(body, &cond)
+	if err != nil {
+		return cond, err
+	}
 
 	// Handle WU API Errors
 	errRes := cond.Response.ErrorResponse
 	if errRes.Type != "" || errRes.Description != "" {
-		return cond, fmt.Errorf("Got error from WeatherUnderground: Type \"%s\", Description \"%s\"\n",
+		return cond, fmt.Errorf("error from WU API: Type \"%s\", Description \"%s\"",
 			errRes.Type, errRes.Description)
 	}
 

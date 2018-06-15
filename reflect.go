@@ -16,8 +16,7 @@ func buildMap(s string, r *CurrentConditions, jsonTags bool) {
 	for _, kv := range strings.Split(s, ",") {
 		// Try to directly lookup by field name
 		f := vW.FieldByName(kv)
-		t, _ := tW.FieldByName(kv)
-		if f.IsValid() {
+		if t, ok := tW.FieldByName(kv); ok && f.IsValid() {
 			if jsonTags {
 				v.SetMapIndex(reflect.ValueOf(t.Tag.Get("json")), f)
 			} else {
@@ -26,13 +25,13 @@ func buildMap(s string, r *CurrentConditions, jsonTags bool) {
 		}
 
 		// Try to lookup through JSON tags
-		reflectRecursive(&resWeather, &kv, v, jsonTags)
+		reflectRecursive(&resWeather, &kv, v, &jsonTags)
 	}
 
 	fmt.Printf("%q\n", m)
 }
 
-func reflectRecursive(s interface{}, tagName *string, v reflect.Value, jsonTags bool) {
+func reflectRecursive(s interface{}, tagName *string, v reflect.Value, jsonTags *bool) {
 	rType := reflect.TypeOf(s).Elem()
 	rValue := reflect.ValueOf(s).Elem()
 
@@ -46,11 +45,13 @@ func reflectRecursive(s interface{}, tagName *string, v reflect.Value, jsonTags 
 		case reflect.Struct:
 			reflectRecursive(vAddr.Interface(), tagName, v, jsonTags)
 		case reflect.Ptr:
-			reflectRecursive(vValue, tagName, v, jsonTags)
+			if vValue != nil {
+				reflectRecursive(vValue, tagName, v, jsonTags)
+			}
 		default:
 			if tag, ok := rValue.Type().Field(i).Tag.Lookup("json"); ok && tag == *tagName {
 				s := fmt.Sprintf("%v", vValue)
-				if jsonTags {
+				if *jsonTags {
 					v.SetMapIndex(reflect.ValueOf(tTag.Get("json")), reflect.ValueOf(s))
 				} else {
 					v.SetMapIndex(reflect.ValueOf(tName), reflect.ValueOf(s))
