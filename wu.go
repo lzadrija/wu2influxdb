@@ -79,8 +79,8 @@ type DisplayLocation struct {
 type Temperature struct {
 	Description         string  `json:"temperature_string"`
 	HeatIndexString     string  `json:"heat_index_string"`
-	Fahrenheit          float32 `json:"temp_f"`
-	Celsius             float32 `json:"temp_c"`
+	Fahrenheit          float64 `json:"temp_f"`
+	Celsius             float64 `json:"temp_c"`
 	FeelsLikeFahrenheit string  `json:"feelslike_f"`
 	HeatIndexFahrenheit string  `json:"heat_index_f"`
 	FeelsLikeCelsius    string  `json:"feelslike_c"`
@@ -100,10 +100,10 @@ type Precipitation struct {
 type Wind struct {
 	Description string  `json:"wind_string"`
 	Direction   string  `json:"wind_dir"`
-	Degrees     float32 `json:"wind_degrees"`
-	MPH         float32 `json:"wind_mph"`
+	Degrees     float64 `json:"wind_degrees"`
+	MPH         float64 `json:"wind_mph"`
 	GustMPH     string  `json:"wind_gust_mph"`
-	KPH         float32 `json:"wind_kph"`
+	KPH         float64 `json:"wind_kph"`
 	GustKPH     string  `json:"wind_gust_kph"`
 }
 
@@ -115,8 +115,8 @@ type Windchill struct {
 
 type Dewpoint struct {
 	Description string  `json:"dewpoint_string"`
-	Fahrenheit  float32 `json:"dewpoint_f"`
-	Celsius     float32 `json:"dewpoint_c"`
+	Fahrenheit  float64 `json:"dewpoint_f"`
+	Celsius     float64 `json:"dewpoint_c"`
 }
 
 type Pressure struct {

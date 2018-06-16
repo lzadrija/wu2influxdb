@@ -52,14 +52,14 @@ func main() {
 	}
 
 	if *debug {
-		fmt.Printf("Dumping WU API response structure")
-		spew.Dump(res.WeatherMessage)
+		fmt.Fprintf(os.Stderr, "Dumping WU API response structure:\n%v\n", spew.Sdump(res.WeatherMessage))
 	}
 
 	f := buildMap(*fieldList, &res.WeatherMessage, *jsonTags)
 
 	if *debug {
-		fmt.Printf("Dumping InfluxDB fields structure: %q\n", f)
+		fmt.Fprintf(os.Stderr, "Dumping InfluxDB fields structure:\n%q\n\nWill not publish to InfluxDB in debug mode. Exiting.\n", f)
+		os.Exit(1)
 	}
 
 	c := InfluxDBClient(influxDBHost, influxDBUser, influxDBPassword)
