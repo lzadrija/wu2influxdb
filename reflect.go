@@ -6,18 +6,18 @@ import (
 	"strings"
 )
 
-func buildMap(s string, r *CurrentConditions, jsonTags bool) map[string]interface{} {
+func buildMap(r *CurrentConditions) map[string]interface{} {
 	m := make(map[string]interface{})
 	v := reflect.ValueOf(m)
 	resWeather := r.CurrentWeather
 	vW := reflect.ValueOf(resWeather)
 	tW := reflect.TypeOf(resWeather)
 
-	for _, kv := range strings.Split(s, ",") {
+	for _, kv := range strings.Split(*fieldList, ",") {
 		// Try to directly lookup by field name
 		f := vW.FieldByName(kv)
 		if t, ok := tW.FieldByName(kv); ok && f.IsValid() {
-			if jsonTags {
+			if *jsonTags {
 				v.SetMapIndex(reflect.ValueOf(t.Tag.Get("json")), f)
 			} else {
 				v.SetMapIndex(reflect.ValueOf(kv), f)
@@ -25,14 +25,15 @@ func buildMap(s string, r *CurrentConditions, jsonTags bool) map[string]interfac
 		}
 
 		// Try to lookup through JSON tags
-		reflectRecursive(&resWeather, &kv, v, &jsonTags)
+		reflectRecursive(&resWeather, &kv, v)
 	}
 
+	// Always pass Unix timestamp
 	m["observation_epoch"] = resWeather.ObservationEpoch
 	return m
 }
 
-func reflectRecursive(s interface{}, tagName *string, v reflect.Value, jsonTags *bool) {
+func reflectRecursive(s interface{}, tagName *string, v reflect.Value) {
 	rType := reflect.TypeOf(s).Elem()
 	rValue := reflect.ValueOf(s).Elem()
 
@@ -44,13 +45,13 @@ func reflectRecursive(s interface{}, tagName *string, v reflect.Value, jsonTags 
 
 		switch rValue.Field(i).Kind() {
 		case reflect.Struct:
-			reflectRecursive(vAddr.Interface(), tagName, v, jsonTags)
+			reflectRecursive(vAddr.Interface(), tagName, v)
 		case reflect.Ptr:
 			if vValue != nil {
-				reflectRecursive(vValue, tagName, v, jsonTags)
+				reflectRecursive(vValue, tagName, v)
 			}
 		default:
-			if tag, ok := rValue.Type().Field(i).Tag.Lookup("json"); ok && tag == *tagName {
+			if tag := tTag.Get("json"); tag == *tagName {
 				s := fmt.Sprintf("%v", vValue)
 				if *jsonTags {
 					v.SetMapIndex(reflect.ValueOf(tTag.Get("json")), reflect.ValueOf(s))

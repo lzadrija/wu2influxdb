@@ -15,17 +15,17 @@ type WeatherResult struct {
 	Error          error
 }
 
-func main() {
-	apiKey := flag.String("APIKey", "", "WeatherUnderground API key")
-	pwsName := flag.String("PWSName", "", "PWS Name")
-	fieldList := flag.String("FieldList", "", "List of WU attributes")
-	debug := flag.Bool("Debug", false, "Dump all WU API responses")
-	jsonTags := flag.Bool("JsonTags", true, "Use JSON Tags for InfluxDB fields")
-	influxDBHost := flag.String("InfluxDBHost", "http://localhost:8086", "InfluxDB host name")
-	influxDBName := flag.String("InfluxDBName", "weather", "InfluxDB database name")
-	influxDBUser := flag.String("InfluxDBUser", "", "InfluxDB username")
-	influxDBPassword := flag.String("InfluxDBPassword", "", "InfluxDB password")
+var apiKey = flag.String("APIKey", "", "WeatherUnderground API key")
+var pwsName = flag.String("PWSName", "", "PWS Name")
+var fieldList = flag.String("FieldList", "", "List of WU attributes")
+var debug = flag.Bool("Debug", false, "Dump all WU API responses")
+var jsonTags = flag.Bool("JsonTags", true, "Use JSON Tags for InfluxDB fields")
+var influxDBHost = flag.String("InfluxDBHost", "http://localhost:8086", "InfluxDB host name")
+var influxDBName = flag.String("InfluxDBName", "weather", "InfluxDB database name")
+var influxDBUser = flag.String("InfluxDBUser", "", "InfluxDB username")
+var influxDBPassword = flag.String("InfluxDBPassword", "", "InfluxDB password")
 
+func main() {
 	flag.Parse()
 
 	if *apiKey == "" || *pwsName == "" || *fieldList == "" {
@@ -55,15 +55,16 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Dumping WU API response structure:\n%v\n", spew.Sdump(res.WeatherMessage))
 	}
 
-	f := buildMap(*fieldList, &res.WeatherMessage, *jsonTags)
+	fields := buildMap(&res.WeatherMessage)
 
 	if *debug {
-		fmt.Fprintf(os.Stderr, "Dumping InfluxDB fields structure:\n%q\n\nWill not publish to InfluxDB in debug mode. Exiting.\n", f)
+		fmt.Fprintf(os.Stderr, "Dumping InfluxDB fields structure:\n%q\n\nWill not publish to InfluxDB in debug mode. Exiting.\n",
+			fields)
 		os.Exit(1)
 	}
 
-	c := InfluxDBClient(influxDBHost, influxDBUser, influxDBPassword)
+	c := InfluxDBClient()
 	defer c.Close()
 
-	InfluxDBPublishPoints(c, influxDBName, f, pwsName)
+	InfluxDBPublishPoints(c, fields)
 }

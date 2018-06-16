@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/influxdata/influxdb/client/v2"
 	"log"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/influxdata/influxdb/client/v2"
 )
 
 const (
@@ -15,7 +16,7 @@ const (
 )
 
 // Initiate connection to InfluxDB service
-func InfluxDBClient(influxDBHost, influxDBUser, influxDBPassword *string) client.Client {
+func InfluxDBClient() client.Client {
 	c, err := client.NewHTTPClient(client.HTTPConfig{Addr: *influxDBHost, Username: *influxDBUser,
 		Password: *influxDBPassword})
 	if err != nil {
@@ -26,7 +27,7 @@ func InfluxDBClient(influxDBHost, influxDBUser, influxDBPassword *string) client
 }
 
 // Publish batched points to InfluxDB database
-func InfluxDBPublishPoints(c client.Client, influxDBName *string, fields map[string]interface{}, pwsName *string) {
+func InfluxDBPublishPoints(c client.Client, fields map[string]interface{}) {
 	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
 		Database: *influxDBName, Precision: DefaultInfluxDBPrecision})
 	if err != nil {
