@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/pquerna/ffjson/ffjson"
 )
 
 const (
@@ -52,60 +54,60 @@ type WeatherResponse struct {
 }
 
 type ObservationLocation struct {
-	City           string `json:"city"`
-	Full           string `json:"full"`
-	Elevation      string `json:"elevation"`
-	Country        string `json:"country"`
-	Longitude      string `json:"longitude"`
-	State          string `json:"state"`
-	CountryISO3166 string `json:"country_iso3166"`
-	Latitude       string `json:"latitude"`
+	City           string      `json:"city"`
+	Full           string      `json:"full"`
+	Elevation      string      `json:"elevation"`
+	Country        string      `json:"country"`
+	Longitude      json.Number `json:"longitude"`
+	State          string      `json:"state"`
+	CountryISO3166 string      `json:"country_iso3166"`
+	Latitude       json.Number `json:"latitude"`
 }
 
 type DisplayLocation struct {
-	City           string `json:"city"`
-	Full           string `json:"full"`
-	Magic          string `json:"magic"`
-	StateName      string `json:"state_name"`
-	Zip            string `json:"zip"`
-	Country        string `json:"country"`
-	Longitude      string `json:"longitude"`
-	State          string `json:"state"`
-	Wmo            string `json:"wmo"`
-	CountryISO3166 string `json:"country_iso3166"`
-	Latitude       string `json:"latitude"`
-	Elevation      string `json:"elevation"`
+	City           string      `json:"city"`
+	Full           string      `json:"full"`
+	Magic          json.Number `json:"magic"`
+	StateName      string      `json:"state_name"`
+	Zip            json.Number `json:"zip"`
+	Country        string      `json:"country"`
+	Longitude      json.Number `json:"longitude"`
+	State          json.Number `json:"state"`
+	Wmo            json.Number `json:"wmo"`
+	CountryISO3166 string      `json:"country_iso3166"`
+	Latitude       json.Number `json:"latitude"`
+	Elevation      json.Number `json:"elevation"`
 }
 
 type Temperature struct {
-	Description         string  `json:"temperature_string"`
-	HeatIndexString     string  `json:"heat_index_string"`
-	Fahrenheit          float64 `json:"temp_f"`
-	Celsius             float64 `json:"temp_c"`
-	FeelsLikeFahrenheit string  `json:"feelslike_f"`
-	HeatIndexFahrenheit float64 `json:"heat_index_f"`
-	FeelsLikeCelsius    string  `json:"feelslike_c"`
-	HeatIndexCelsius    float64 `json:"heat_index_c"`
+	Description         string      `json:"temperature_string"`
+	HeatIndexString     string      `json:"heat_index_string"`
+	Fahrenheit          json.Number `json:"temp_f"`
+	Celsius             json.Number `json:"temp_c"`
+	FeelsLikeFahrenheit json.Number `json:"feelslike_f"`
+	HeatIndexFahrenheit string      `json:"heat_index_f"`
+	FeelsLikeCelsius    json.Number `json:"feelslike_c"`
+	HeatIndexCelsius    string      `json:"heat_index_c"`
 }
 
 type Precipitation struct {
-	Description       string `json:"precip_today_string"`
-	PrecipTodayMetric string `json:"precip_today_metric"`
-	PrecipTodayIn     string `json:"precip_today_in"`
-	Precip1HrString   string `json:"precip_1hr_string"`
-	Precip1HrMetric   string `json:"precip_1hr_metric"`
-	Precip1HrIn       string `json:"precip_1hr_in"`
-	RelativeHumidity  string `json:"relative_humidity"`
+	Description       string      `json:"precip_today_string"`
+	PrecipTodayMetric json.Number `json:"precip_today_metric"`
+	PrecipTodayIn     json.Number `json:"precip_today_in"`
+	Precip1HrString   string      `json:"precip_1hr_string"`
+	Precip1HrMetric   json.Number `json:"precip_1hr_metric"`
+	Precip1HrIn       json.Number `json:"precip_1hr_in"`
+	RelativeHumidity  string      `json:"relative_humidity"`
 }
 
 type Wind struct {
-	Description string  `json:"wind_string"`
-	Direction   string  `json:"wind_dir"`
-	Degrees     float64 `json:"wind_degrees"`
-	MPH         float64 `json:"wind_mph"`
-	GustMPH     string  `json:"wind_gust_mph"`
-	KPH         float64 `json:"wind_kph"`
-	GustKPH     string  `json:"wind_gust_kph"`
+	Description string      `json:"wind_string"`
+	Direction   string      `json:"wind_dir"`
+	Degrees     json.Number `json:"wind_degrees"`
+	MPH         json.Number `json:"wind_mph"`
+	GustMPH     json.Number `json:"wind_gust_mph"`
+	KPH         json.Number `json:"wind_kph"`
+	GustKPH     json.Number `json:"wind_gust_kph"`
 }
 
 type Windchill struct {
@@ -115,31 +117,31 @@ type Windchill struct {
 }
 
 type Dewpoint struct {
-	Description string  `json:"dewpoint_string"`
-	Fahrenheit  float64 `json:"dewpoint_f"`
-	Celsius     float64 `json:"dewpoint_c"`
+	Description string      `json:"dewpoint_string"`
+	Fahrenheit  json.Number `json:"dewpoint_f"`
+	Celsius     json.Number `json:"dewpoint_c"`
 }
 
 type Pressure struct {
-	Trend string `json:"pressure_trend"`
-	IN    string `json:"pressure_in"`
-	MB    string `json:"pressure_mb"`
+	Trend string      `json:"pressure_trend"`
+	IN    json.Number `json:"pressure_in"`
+	MB    json.Number `json:"pressure_mb"`
 }
 
 type Solar struct {
-	Radiation string `json:"solarradiation"`
-	UV        string `json:"UV"`
+	Radiation json.Number `json:"solarradiation"`
+	UV        json.Number `json:"UV"`
 }
 
 type Visibility struct {
-	VisibilityKM string `json:"visibility_km"`
-	VisibilityMI string `json:"visibility_mi"`
+	VisibilityKM json.Number `json:"visibility_km"`
+	VisibilityMI json.Number `json:"visibility_mi"`
 }
 
 type ObservationTimeStamp struct {
-	ObservationTime       string `json:"observation_time"`
-	ObservationEpoch      string `json:"observation_epoch"`
-	ObservationTimeRFC822 string `json:"observation_time_rfc822"`
+	ObservationTime       string      `json:"observation_time"`
+	ObservationEpoch      json.Number `json:"observation_epoch"`
+	ObservationTimeRFC822 string      `json:"observation_time_rfc822"`
 }
 
 type Client struct {
@@ -190,7 +192,7 @@ func (c *Client) GetConditions() (CurrentConditions, error) {
 
 	// Parse JSON
 	cond := CurrentConditions{}
-	err = json.Unmarshal(body, &cond)
+	err = ffjson.Unmarshal(body, &cond)
 	if err != nil {
 		return cond, err
 	}

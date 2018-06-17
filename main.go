@@ -62,8 +62,8 @@ func main() {
 	fields := buildMap(&res.WeatherMessage)
 
 	if *debug {
-		fmt.Fprintf(os.Stderr, "Dumping InfluxDB fields structure:\n%q\n\nWill not publish to InfluxDB in debug mode. Exiting.\n",
-			fields)
+		fmt.Fprintf(os.Stderr, "Dumping InfluxDB fields structure:\n%v\n\nWill not publish to InfluxDB in debug mode. Exiting.\n",
+			floatifyFields(fields))
 		os.Exit(1)
 	}
 
