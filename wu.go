@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 )
 
@@ -82,9 +83,9 @@ type Temperature struct {
 	Fahrenheit          float64 `json:"temp_f"`
 	Celsius             float64 `json:"temp_c"`
 	FeelsLikeFahrenheit string  `json:"feelslike_f"`
-	HeatIndexFahrenheit string  `json:"heat_index_f"`
+	HeatIndexFahrenheit float64 `json:"heat_index_f"`
 	FeelsLikeCelsius    string  `json:"feelslike_c"`
-	HeatIndexCelsius    string  `json:"heat_index_c"`
+	HeatIndexCelsius    float64 `json:"heat_index_c"`
 }
 
 type Precipitation struct {
@@ -180,6 +181,11 @@ func (c *Client) GetConditions() (CurrentConditions, error) {
 	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
 		var err = fmt.Errorf(string(body))
 		return CurrentConditions{}, err
+	}
+
+	// Dump HTTP body response if debugging
+	if *debug {
+		fmt.Fprintf(os.Stderr, "Dumping raw WU API:\n%v\n", string(body))
 	}
 
 	// Parse JSON
