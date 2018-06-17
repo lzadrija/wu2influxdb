@@ -51,7 +51,7 @@ func InfluxDBPublishPoints(c client.Client, fields map[string]interface{}) {
 	pointTime := time.Unix(i, 0)
 
 	// Convert all values to float
-	floatifyFields(fields)
+	fields = floatifyFields(fields)
 
 	pt, err := client.NewPoint(DefaultInfluxDBMeasurement, tags, fields, pointTime)
 	if err != nil {
@@ -69,12 +69,16 @@ func InfluxDBPublishPoints(c client.Client, fields map[string]interface{}) {
 }
 
 // Converts all string values in map to float64
-func floatifyFields(fields map[string]interface{}) {
+func floatifyFields(fields map[string]interface{}) map[string]interface{} {
 	for k, j := range fields {
 		var f string
 
-		// Convert to strings
 		switch v := j.(type) {
+		case float32:
+			fields[k] = float64(v)
+			continue
+		case float64:
+			continue
 		case string:
 			f = j.(string)
 		case fmt.Stringer:
@@ -94,4 +98,6 @@ func floatifyFields(fields map[string]interface{}) {
 		fields[k] = v
 
 	}
+
+	return fields
 }

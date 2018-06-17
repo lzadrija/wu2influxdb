@@ -58,6 +58,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Dumping WU API response structure:\n%v\n", spew.Sdump(res.WeatherMessage))
 	}
 
+	// prepare InfluxDB metric fields
 	fields := buildMap(&res.WeatherMessage)
 
 	if *debug {
