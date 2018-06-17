@@ -132,11 +132,17 @@ Usage of wu2influxdb:
 Typical use example to poll IZAGREB51 PWS data and import some of the data into InfluxDB weather database is:
 
 ```
-wu2influxdb -APIKey XXXXXXXXXXXXXXXX -PWSName IZAGREB51 -FieldList temp\_c,dewpoint\_c,relative\_humidity,pressure\_mb,wind\_kph,solarradiation,precip\_today\_metric,precip\_1hr\_metric -InfluxDBName weather
+wu2influxdb -APIKey XXXXXXXXXXXXXXXX \
+  -PWSName IZAGREB51 \
+  -FieldList temp_c,dewpoint_c,relative_humidity,pressure_mb,wind_kph,solarradiation,precip_today_metric,precip_1hr_metric \
+  -InfluxDBName weather
 ```
 
 To debug remote responses, we can use Debug parameter:
 
 ```
-./wu2influxdb -APIKey XXXXXXXXXXXXXXXX -PWSName IZAGREB51 -FieldList temp\_c,dewpoint\_c,relative\_humidity,pressure\_mb,wind\_kph,solarradiation,precip\_today\_metric,precip\_1hr\_metric -Debug
+wu2influxdb -Debug \
+  -APIKey XXXXXXXXXXXXXXXX \
+  -PWSName IZAGREB51 \
+  -FieldList temp_c,dewpoint_c,relative_humidity,pressure_mb,wind_kph,solarradiation,precip_today_metric,precip_1hr_metric
 ```
