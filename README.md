@@ -1,4 +1,4 @@
-# wu2influxdb [![GitHub license](https://img.shields.io/github/license/dkorunic/wu2influxdb.svg)](https://github.com/dkorunic/wu2influxdb/blob/master/LICENSE.txt) [![GitHub release](https://img.shields.io/github/release/wu2influxdb/wu2influxdb.svg)](https://github.com/dkorunic/wu2influxdb/releases/latest) [![Go Report Card](https://goreportcard.com/badge/github.com/dkorunic/wu2influxdb)](https://goreportcard.com/badge/github.com/dkorunic/wu2influxdb)
+# wu2influxdb [![GitHub license](https://img.shields.io/github/license/dkorunic/wu2influxdb.svg)](https://github.com/dkorunic/wu2influxdb/blob/master/LICENSE.txt) [![GitHub release](https://img.shields.io/github/release/dkorunic/wu2influxdb.svg)](https://github.com/dkorunic/wu2influxdb/releases/latest) [![Go Report Card](https://goreportcard.com/badge/github.com/dkorunic/wu2influxdb)](https://goreportcard.com/badge/github.com/dkorunic/wu2influxdb)
 
 
 ## About
