@@ -5,6 +5,8 @@
 *.dll
 *.so
 *.dylib
+wu2influxdb
+dist/
 
 # Test binary, build with `go test -c`
 *.test

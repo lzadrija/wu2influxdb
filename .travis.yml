@@ -1,0 +1,17 @@
+language: go
+sudo: false
+go:
+    - 1.10
+before_install:
+    - go get -t -v ./...
+    - go get github.com/mattn/goveralls
+install:
+    - # skip
+before_script:
+    - gofmt -d -s .
+    - go vet ./...
+    - go test -v -race ./...
+script:
+    - $HOME/gopath/bin/goveralls -service=travis-ci
+notifications:
+    email: false
