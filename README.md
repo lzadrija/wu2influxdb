@@ -1,10 +1,11 @@
-# wu2influxdb [![Go Report Card](https://goreportcard.com/badge/github.com/dkorunic/wu2influxdb)](https://goreportcard.com/badge/github.com/dkorunic/wu2influxdb)
+# wu2influxdb [![GitHub license](https://img.shields.io/github/license/dkorunic/wu2influxdb.svg)](https://github.com/dkorunic/wu2influxdb/blob/master/LICENSE.txt) [![GitHub release](https://img.shields.io/github/release/wu2influxdb/wu2influxdb.svg)](https://github.com/dkorunic/wu2influxdb/releases/latest) [![Go Report Card](https://goreportcard.com/badge/github.com/dkorunic/wu2influxdb)](https://goreportcard.com/badge/github.com/dkorunic/wu2influxdb)
+
 
 ## About
 
 Wu2influxdb is a small open source software to periodically pull PWS (Personal WeatherStation) data from Weather Underground and save into InfluxDB time series database.
 
-Typically it is possible to export any data that [Weather Underground API](https://www.wunderground.com/weather/api/d/docs) provides for a PWS and save into InfluxDB database, optionally charting it in [Grafana](https://grafana.com/) later on.
+Typically it is possible to export any data that [Weather Underground API](https://www.wunderground.com/weather/api/d/docs) provides for any PWS and save into InfluxDB database, optionally charting it in [Grafana](https://grafana.com/) later on.
 
 JSON attributes that can be polled and saved are (not all make sense to save in InfluxDB however):
 
@@ -104,6 +105,14 @@ It is possible to use both native Weather Underground JSON attribute naming and 
 * list of WU attributes to import: **FieldList** parameter
 
 ## Installation
+
+There are two ways of installing wu2influxdb:
+
+### Manual
+
+Download your preferred flavor from [the releases](https://github.com/dkorunic/wu2influxdb/releases/latest) page and install manually.
+
+### Using go get
 
 ```shell
 go get https://github.com/dkorunic/wu2influxdb
