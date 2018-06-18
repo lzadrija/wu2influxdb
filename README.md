@@ -1,5 +1,11 @@
-# wu2influxdb [![GitHub license](https://img.shields.io/github/license/dkorunic/wu2influxdb.svg)](https://github.com/dkorunic/wu2influxdb/blob/master/LICENSE.txt) [![GitHub release](https://img.shields.io/github/release/dkorunic/wu2influxdb.svg)](https://github.com/dkorunic/wu2influxdb/releases/latest) [![TravisCI](https://img.shields.io/travis/dkorunic/wu2influxdb.svg)](https://travis-ci.org/dkorunic/wu2influxdb) [![Go Report Card](https://goreportcard.com/badge/github.com/dkorunic/wu2influxdb)](https://goreportcard.com/badge/github.com/dkorunic/wu2influxdb)
+wu2influxdb
+===
 
+[![GitHub license](https://img.shields.io/github/license/dkorunic/wu2influxdb.svg)](https://github.com/dkorunic/wu2influxdb/blob/master/LICENSE.txt)
+[![GitHub release](https://img.shields.io/github/release/dkorunic/wu2influxdb.svg)](https://github.com/dkorunic/wu2influxdb/releases/latest)
+[![Build Status](https://img.shields.io/travis/dkorunic/wu2influxdb.svg)](https://travis-ci.org/dkorunic/wu2influxdb)
+[![codebeat badge](https://codebeat.co/badges/a5dc7a44-8e77-4362-b843-8d05ed0160f4)](https://codebeat.co/projects/github-com-dkorunic-wu2influxdb-master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/dkorunic/wu2influxdb)](https://goreportcard.com/badge/github.com/dkorunic/wu2influxdb)
 
 ## About
 

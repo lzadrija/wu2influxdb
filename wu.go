@@ -11,33 +11,35 @@ import (
 	"time"
 
 	"github.com/pquerna/ffjson/ffjson"
+	"strconv"
 )
 
 const (
-	WuAPIPWSURL         = "http://api.wunderground.com/api/%s/conditions/q/pws:%s.json"
-	DefaultWuAPITimeout = time.Second * 15
+	defaultWuAPIURL     = "http://api.wunderground.com/api/%s/conditions/q/pws:%s.json"
+	defaultWuAPITimeout = time.Second * 15
+	maxTimeOffset       = time.Hour * 2
 )
 
-// WU API Conditions Response
+// CurrentConditions WU API Conditions Response
 type CurrentConditions struct {
 	CurrentWeather WeatherResponse `json:"current_observation"`
 	Response       Response        `json:"response"`
 }
 
-// WU API Status Response
+// Response WU API Status Response
 type Response struct {
 	TermsOfService string        `json:"termsofService"`
 	Version        string        `json:"version"`
 	ErrorResponse  ErrorResponse `json:"error"`
 }
 
-// WU API Error Response
+// ErrorResponse WU API Error Response
 type ErrorResponse struct {
 	Type        string `json:"type"`
 	Description string `json:"description"`
 }
 
-// WU API Observation Response
+// WeatherResponse WU API Observation Response
 type WeatherResponse struct {
 	ObservationLocation ObservationLocation `json:"observation_location"`
 	DisplayLocation     DisplayLocation     `json:"display_location"`
@@ -53,6 +55,7 @@ type WeatherResponse struct {
 	*ObservationTimeStamp
 }
 
+// ObservationLocation WU API ObservationLocation Response
 type ObservationLocation struct {
 	City           string      `json:"city"`
 	Full           string      `json:"full"`
@@ -64,6 +67,7 @@ type ObservationLocation struct {
 	Latitude       json.Number `json:"latitude"`
 }
 
+// DisplayLocation WU API DisplayLocation Response
 type DisplayLocation struct {
 	City           string      `json:"city"`
 	Full           string      `json:"full"`
@@ -79,17 +83,19 @@ type DisplayLocation struct {
 	Elevation      json.Number `json:"elevation"`
 }
 
+// Temperature WU API Temperature Response
 type Temperature struct {
 	Description         string      `json:"temperature_string"`
 	HeatIndexString     string      `json:"heat_index_string"`
 	Fahrenheit          json.Number `json:"temp_f"`
 	Celsius             json.Number `json:"temp_c"`
 	FeelsLikeFahrenheit json.Number `json:"feelslike_f"`
-	HeatIndexFahrenheit string      `json:"heat_index_f"`
+	HeatIndexFahrenheit json.Number `json:"heat_index_f"`
 	FeelsLikeCelsius    json.Number `json:"feelslike_c"`
-	HeatIndexCelsius    string      `json:"heat_index_c"`
+	HeatIndexCelsius    json.Number `json:"heat_index_c"`
 }
 
+// Precipitation WU API Precipitation Response
 type Precipitation struct {
 	Description       string      `json:"precip_today_string"`
 	PrecipTodayMetric json.Number `json:"precip_today_metric"`
@@ -100,6 +106,7 @@ type Precipitation struct {
 	RelativeHumidity  string      `json:"relative_humidity"`
 }
 
+// Wind WU API Wind Response
 type Wind struct {
 	Description string      `json:"wind_string"`
 	Direction   string      `json:"wind_dir"`
@@ -110,58 +117,66 @@ type Wind struct {
 	GustKPH     json.Number `json:"wind_gust_kph"`
 }
 
+// Windchill WU API Windchill Response
 type Windchill struct {
 	Description string `json:"windchill_string"`
 	Fahrenheit  string `json:"windchill_f"`
 	Celsius     string `json:"windchill_c"`
 }
 
+// Dewpoint WU API Dewpoint Response
 type Dewpoint struct {
 	Description string      `json:"dewpoint_string"`
 	Fahrenheit  json.Number `json:"dewpoint_f"`
 	Celsius     json.Number `json:"dewpoint_c"`
 }
 
+// Pressure WU API Pressure Response
 type Pressure struct {
 	Trend string      `json:"pressure_trend"`
 	IN    json.Number `json:"pressure_in"`
 	MB    json.Number `json:"pressure_mb"`
 }
 
+// Solar WU API Solar Response
 type Solar struct {
 	Radiation json.Number `json:"solarradiation"`
 	UV        json.Number `json:"UV"`
 }
 
+// Visibility WU API Visibility Response
 type Visibility struct {
 	VisibilityKM json.Number `json:"visibility_km"`
 	VisibilityMI json.Number `json:"visibility_mi"`
 }
 
+// ObservationTimeStamp WU API ObservationTimeStamp Response
 type ObservationTimeStamp struct {
 	ObservationTime       string      `json:"observation_time"`
 	ObservationEpoch      json.Number `json:"observation_epoch"`
 	ObservationTimeRFC822 string      `json:"observation_time_rfc822"`
 }
 
-type Client struct {
+// WuClient is a WU API client that performs WU API lookup
+type WuClient struct {
 	httpClient *http.Client
 	wuURL      *url.URL
+	debug      *bool
 }
 
-// Prepare HTTP client structure for WU API request
-func NewClient(PWSName string, APIKey string) (*Client, error) {
-	wuURL, err := url.Parse(fmt.Sprintf(WuAPIPWSURL, APIKey, PWSName))
+// NewWuClient prepares HTTP client structure for WU API request
+func NewWuClient(PWSName *string, APIKey *string, debug *bool) (*WuClient, error) {
+	wuURL, err := url.Parse(fmt.Sprintf(defaultWuAPIURL, *APIKey, *PWSName))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	c := &Client{httpClient: &http.Client{Timeout: DefaultWuAPITimeout}, wuURL: wuURL}
+	c := &WuClient{httpClient: &http.Client{Timeout: defaultWuAPITimeout}, wuURL: wuURL, debug: debug}
 	return c, nil
 }
 
-// Get current conditions from WU API for PWS
-func (c *Client) GetConditions() (CurrentConditions, error) {
+// GetWuConditions fetches current conditions from WU API for a given PWS
+func (c *WuClient) GetWuConditions() (CurrentConditions, error) {
 	req, err := http.NewRequest("GET", c.wuURL.String(), nil)
 	if err != nil {
 		return CurrentConditions{}, err
@@ -186,7 +201,7 @@ func (c *Client) GetConditions() (CurrentConditions, error) {
 	}
 
 	// Dump HTTP body response if debugging
-	if *debug {
+	if *c.debug {
 		fmt.Fprintf(os.Stderr, "Dumping raw WU API:\n%v\n", string(body))
 	}
 
@@ -202,6 +217,16 @@ func (c *Client) GetConditions() (CurrentConditions, error) {
 	if errRes.Type != "" || errRes.Description != "" {
 		return cond, fmt.Errorf("error from WU API: Type \"%s\", Description \"%s\"",
 			errRes.Type, errRes.Description)
+	}
+
+	// Validate epoch: permit at most maxTimeOffset time offset
+	i, err := strconv.ParseInt(cond.CurrentWeather.ObservationEpoch.String(), 10, 64)
+	if err != nil {
+		return cond, err
+	}
+	if td := time.Now().Sub(time.Unix(i, 0)); td > maxTimeOffset {
+		return cond, fmt.Errorf("error in WU API data: more than %v in time offset from observation_epoch: %v",
+			maxTimeOffset, td)
 	}
 
 	return cond, nil

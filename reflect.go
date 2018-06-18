@@ -6,7 +6,9 @@ import (
 	"strings"
 )
 
-func buildMap(r *CurrentConditions) map[string]interface{} {
+// buildMetricsFields prepares a list of fields for InfluxDB fields metrics by lookuping both native GO field names or
+// JSON field names
+func buildMetricsFields(fieldList *string, jsonTags *bool, r *CurrentConditions) map[string]interface{} {
 	m := make(map[string]interface{})
 	v := reflect.ValueOf(m)
 	resWeather := r.CurrentWeather
@@ -25,7 +27,7 @@ func buildMap(r *CurrentConditions) map[string]interface{} {
 		}
 
 		// Try to lookup through JSON tags
-		reflectRecursive(&resWeather, &kv, v)
+		rTagSearch(jsonTags, &resWeather, &kv, v)
 	}
 
 	// Always pass Unix timestamp
@@ -33,7 +35,9 @@ func buildMap(r *CurrentConditions) map[string]interface{} {
 	return m
 }
 
-func reflectRecursive(s interface{}, tagName *string, v reflect.Value) {
+// rTagSearch recursively searches for a list of JSON field names and builds a list of fields for InfluxDB fields,
+// either using native GO field names or JSON field names
+func rTagSearch(jsonTags *bool, s interface{}, tagName *string, v reflect.Value) {
 	rType := reflect.TypeOf(s).Elem()
 	rValue := reflect.ValueOf(s).Elem()
 
@@ -45,10 +49,10 @@ func reflectRecursive(s interface{}, tagName *string, v reflect.Value) {
 
 		switch rValue.Field(i).Kind() {
 		case reflect.Struct:
-			reflectRecursive(vAddr.Interface(), tagName, v)
+			rTagSearch(jsonTags, vAddr.Interface(), tagName, v)
 		case reflect.Ptr:
 			if vValue != nil {
-				reflectRecursive(vValue, tagName, v)
+				rTagSearch(jsonTags, vValue, tagName, v)
 			}
 		default:
 			if tag := tTag.Get("json"); tag == *tagName {

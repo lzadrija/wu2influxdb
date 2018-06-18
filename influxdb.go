@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	DefaultInfluxDBPrecision   = "s"
-	DefaultInfluxDBMeasurement = "climate"
+	defaultInfluxDBPrecision   = "s"
+	defaultInfluxDBMeasurement = "climate"
 )
 
-// Initiate connection to InfluxDB service
-func InfluxDBClient() client.Client {
+// InfluxDBClient initiates connection to InfluxDB service
+func InfluxDBClient(influxDBHost, influxDBUser, influxDBPassword *string) client.Client {
 	c, err := client.NewHTTPClient(client.HTTPConfig{Addr: *influxDBHost, Username: *influxDBUser,
 		Password: *influxDBPassword})
 	if err != nil {
@@ -26,10 +26,10 @@ func InfluxDBClient() client.Client {
 	return c
 }
 
-// Publish batched points to InfluxDB database
-func InfluxDBPublishPoints(c client.Client, fields map[string]interface{}) {
+// InfluxDBPublishPoints publishes batched points to InfluxDB database
+func InfluxDBPublishPoints(c client.Client, fields map[string]interface{}, influxDBName, pwsName *string) {
 	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
-		Database: *influxDBName, Precision: DefaultInfluxDBPrecision})
+		Database: *influxDBName, Precision: defaultInfluxDBPrecision})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,9 +51,9 @@ func InfluxDBPublishPoints(c client.Client, fields map[string]interface{}) {
 	pointTime := time.Unix(i, 0)
 
 	// Convert all values to float
-	fields = floatifyFields(fields)
+	fields = aToFloat(fields)
 
-	pt, err := client.NewPoint(DefaultInfluxDBMeasurement, tags, fields, pointTime)
+	pt, err := client.NewPoint(defaultInfluxDBMeasurement, tags, fields, pointTime)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,8 +68,8 @@ func InfluxDBPublishPoints(c client.Client, fields map[string]interface{}) {
 	}
 }
 
-// Converts all string values in map to float64
-func floatifyFields(fields map[string]interface{}) map[string]interface{} {
+// aToFloat converts all values in map to float64 where conversion is possible
+func aToFloat(fields map[string]interface{}) map[string]interface{} {
 	for k, j := range fields {
 		var f string
 

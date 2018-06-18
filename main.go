@@ -13,40 +13,39 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
-type WeatherResult struct {
+type weatherResult struct {
 	WeatherMessage CurrentConditions
 	Error          error
 }
 
 const (
-	apiKeyRegex  = `^[a-zA-Z0-9]{16}$`
-	pwsNameRegex = `^[a-zA-Z0-9_-]+$`
+	defaultAPIKeyRegex  = `^[a-zA-Z0-9]{16}$`
+	defaultPwsNameRegex = `^[a-zA-Z0-9_-]+$`
 )
 
-var apiKey = flag.String("APIKey", "", "WeatherUnderground API key")
-var pwsName = flag.String("PWSName", "", "PWS Name")
-var fieldList = flag.String("FieldList", "", "List of WU attributes")
-var debug = flag.Bool("Debug", false, "Dump all WU API responses")
-var jsonTags = flag.Bool("JsonTags", true, "Use WU JSON names for InfluxDB fields")
-var influxDBHost = flag.String("InfluxDBHost", "http://localhost:8086", "InfluxDB host name")
-var influxDBName = flag.String("InfluxDBName", "", "InfluxDB database name")
-var influxDBUser = flag.String("InfluxDBUser", "", "InfluxDB username")
-var influxDBPassword = flag.String("InfluxDBPassword", "", "InfluxDB password")
-
 func main() {
+	apiKey := flag.String("APIKey", "", "WeatherUnderground API key")
+	pwsName := flag.String("PWSName", "", "PWS Name")
+	fieldList := flag.String("FieldList", "", "List of WU attributes")
+	debug := flag.Bool("Debug", false, "Dump all WU API responses")
+	jsonTags := flag.Bool("JsonTags", true, "Use WU JSON names for InfluxDB fields")
+	influxDBHost := flag.String("InfluxDBHost", "http://localhost:8086", "InfluxDB host name")
+	influxDBName := flag.String("InfluxDBName", "", "InfluxDB database name")
+	influxDBUser := flag.String("InfluxDBUser", "", "InfluxDB username")
+	influxDBPassword := flag.String("InfluxDBPassword", "", "InfluxDB password")
 	flag.Parse()
-	parameterCheck()
+	flagsCheck(debug, apiKey, pwsName, fieldList, influxDBHost, influxDBName)
 
-	wuClient, err := NewClient(*pwsName, *apiKey)
+	wuClient, err := NewWuClient(pwsName, apiKey, debug)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ch := make(chan *WeatherResult)
+	ch := make(chan *weatherResult)
 	go func() {
 		defer close(ch)
-		cond, err := wuClient.GetConditions()
-		ch <- &WeatherResult{cond, err}
+		cond, err := wuClient.GetWuConditions()
+		ch <- &weatherResult{cond, err}
 	}()
 
 	res := <-ch
@@ -59,33 +58,33 @@ func main() {
 	}
 
 	// prepare InfluxDB metric fields
-	fields := buildMap(&res.WeatherMessage)
+	fields := buildMetricsFields(fieldList, jsonTags, &res.WeatherMessage)
 
 	if *debug {
 		fmt.Fprintf(os.Stderr, "Dumping InfluxDB fields structure:\n%v\n\nWill not publish to InfluxDB in debug mode. Exiting.\n",
-			floatifyFields(fields))
+			aToFloat(fields))
 		os.Exit(1)
 	}
 
-	c := InfluxDBClient()
+	c := InfluxDBClient(influxDBHost, influxDBUser, influxDBPassword)
 	defer c.Close()
 
-	InfluxDBPublishPoints(c, fields)
+	InfluxDBPublishPoints(c, fields, influxDBName, pwsName)
 }
 
-func parameterCheck() {
+func flagsCheck(debug *bool, apiKey, pwsName, fieldList, influxDBHost, influxDBName *string) {
 	if *apiKey == "" || *pwsName == "" || *fieldList == "" {
 		fmt.Fprintf(os.Stderr, "Invalid number of arguments. APIKey, PWSName and fieldList are mandatory parameters.\n")
 		flag.Usage()
 		os.Exit(1)
 	}
 
-	if regexp.MustCompile(apiKeyRegex).MatchString(*apiKey) == false {
+	if regexp.MustCompile(defaultAPIKeyRegex).MatchString(*apiKey) == false {
 		fmt.Fprintf(os.Stderr, "APIKey parameter \"%s\" is not in valid format (16-digit alphanumeric string required).\n", *apiKey)
 		os.Exit(1)
 	}
 
-	if regexp.MustCompile(pwsNameRegex).MatchString(*pwsName) == false {
+	if regexp.MustCompile(defaultPwsNameRegex).MatchString(*pwsName) == false {
 		fmt.Fprintf(os.Stderr, "PWSName parameter \"%s\" is not in valid format (alphanumeric string including minus and underscore required).\n", *pwsName)
 		os.Exit(1)
 	}
