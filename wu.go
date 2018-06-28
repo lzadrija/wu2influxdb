@@ -176,13 +176,13 @@ func NewWuClient(PWSName *string, APIKey *string, debug *bool) (*WuClient, error
 }
 
 // GetWuConditions fetches current conditions from WU API for a given PWS
-func (c *WuClient) GetWuConditions() (CurrentConditions, error) {
-	req, err := http.NewRequest("GET", c.wuURL.String(), nil)
+func (wuClient *WuClient) GetWuConditions() (CurrentConditions, error) {
+	req, err := http.NewRequest("GET", wuClient.wuURL.String(), nil)
 	if err != nil {
 		return CurrentConditions{}, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := wuClient.httpClient.Do(req)
 	if err != nil {
 		return CurrentConditions{}, err
 	}
@@ -201,7 +201,7 @@ func (c *WuClient) GetWuConditions() (CurrentConditions, error) {
 	}
 
 	// Dump HTTP body response if debugging
-	if *c.debug {
+	if *wuClient.debug {
 		fmt.Fprintf(os.Stderr, "Dumping raw WU API:\n%v\n", string(body))
 	}
 
