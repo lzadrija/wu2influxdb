@@ -8,61 +8,67 @@ import (
 
 // buildMetricsFields prepares a list of fields for InfluxDB fields metrics by lookuping both native GO field names or
 // JSON field names
-func buildMetricsFields(fieldList *string, jsonTags *bool, r *CurrentConditions) map[string]interface{} {
-	m := make(map[string]interface{})
-	v := reflect.ValueOf(m)
-	resWeather := r.CurrentWeather
-	vW := reflect.ValueOf(resWeather)
-	tW := reflect.TypeOf(resWeather)
+func buildMetricsFields(fieldList *string, jsonTags *bool, currentConditions *CurrentConditions) map[string]interface{} {
+	fieldValuesByName := make(map[string]interface{})
+	valueOfFieldValuesByName := reflect.ValueOf(fieldValuesByName)
 
-	for _, kv := range strings.Split(*fieldList, ",") {
+	weatherResponse := currentConditions.CurrentWeather
+	weatherResponseValue := reflect.ValueOf(weatherResponse)
+	weatherResponseType := reflect.TypeOf(weatherResponse)
+
+	for _, fieldName := range strings.Split(*fieldList, ",") {
 		// Try to directly lookup by field name
-		f := vW.FieldByName(kv)
-		if t, ok := tW.FieldByName(kv); ok && f.IsValid() {
-			if *jsonTags {
-				v.SetMapIndex(reflect.ValueOf(t.Tag.Get("json")), f)
-			} else {
-				v.SetMapIndex(reflect.ValueOf(kv), f)
-			}
+		fieldValue := weatherResponseValue.FieldByName(fieldName)
+		if fieldDescription, isFieldFound := weatherResponseType.FieldByName(fieldName); isFieldFound && fieldValue.IsValid() {
+
+			valueOfFieldValuesByName.SetMapIndex(reflect.ValueOf(getFieldName(jsonTags, fieldDescription.Tag.Get("json"), fieldName)),
+				reflect.ValueOf(fieldValue))
 		}
 
 		// Try to lookup through JSON tags
-		rTagSearch(jsonTags, &resWeather, &kv, v)
+		buildMetricsFieldsByRecursiveFieldNameSearch(jsonTags, &weatherResponse, &fieldName, valueOfFieldValuesByName)
 	}
 
 	// Always pass Unix timestamp
-	m["observation_epoch"] = resWeather.ObservationEpoch
-	return m
+	fieldValuesByName["observation_epoch"] = weatherResponse.ObservationEpoch
+
+	return fieldValuesByName
 }
 
-// rTagSearch recursively searches for a list of JSON field names and builds a list of fields for InfluxDB fields,
+// buildMetricsFieldsByRecursiveFieldNameSearch recursively searches for a list of JSON field names and builds a list of fields for InfluxDB fields,
 // either using native GO field names or JSON field names
-func rTagSearch(jsonTags *bool, s interface{}, tagName *string, v reflect.Value) {
-	rType := reflect.TypeOf(s).Elem()
-	rValue := reflect.ValueOf(s).Elem()
+func buildMetricsFieldsByRecursiveFieldNameSearch(jsonTags *bool, weatherResponse interface{}, fieldNameToFind *string, valueOfFieldValuesByName reflect.Value) {
+	weatherResponseType := reflect.TypeOf(weatherResponse).Elem()
+	weatherResponseValue := reflect.ValueOf(weatherResponse).Elem()
 
-	for i := 0; i < rType.NumField(); i++ {
-		tName := rType.Field(i).Name
-		tTag := rType.Field(i).Tag
-		vValue := rValue.Field(i).Interface()
-		vAddr := rValue.Field(i).Addr()
+	for i := 0; i < weatherResponseType.NumField(); i++ {
+		weatherResponseFieldValue := weatherResponseValue.Field(i)
 
-		switch rValue.Field(i).Kind() {
+		switch weatherResponseFieldValue.Kind() {
 		case reflect.Struct:
-			rTagSearch(jsonTags, vAddr.Interface(), tagName, v)
+			buildMetricsFieldsByRecursiveFieldNameSearch(jsonTags, weatherResponseFieldValue.Addr().Interface(), fieldNameToFind, valueOfFieldValuesByName)
 		case reflect.Ptr:
-			if vValue != nil {
-				rTagSearch(jsonTags, vValue, tagName, v)
+			if weatherResponseFieldValue.Interface() != nil {
+				buildMetricsFieldsByRecursiveFieldNameSearch(jsonTags, weatherResponseFieldValue.Interface(), fieldNameToFind, valueOfFieldValuesByName)
 			}
 		default:
-			if tag := tTag.Get("json"); tag == *tagName {
-				s := fmt.Sprintf("%v", vValue)
-				if *jsonTags {
-					v.SetMapIndex(reflect.ValueOf(tTag.Get("json")), reflect.ValueOf(s))
-				} else {
-					v.SetMapIndex(reflect.ValueOf(tName), reflect.ValueOf(s))
-				}
+			fieldTagName := weatherResponseType.Field(i).Tag.Get("json")
+
+			if fieldTagName == *fieldNameToFind {
+				fieldValue := fmt.Sprintf("%v", weatherResponseFieldValue.Interface())
+
+				valueOfFieldValuesByName.SetMapIndex(reflect.ValueOf(getFieldName(jsonTags, fieldTagName, weatherResponseType.Field(i).Name)),
+					reflect.ValueOf(fieldValue))
 			}
 		}
 	}
+}
+
+func getFieldName(jsonTags *bool, fieldTagName string, fieldName string) string {
+
+	if *jsonTags {
+		return fieldTagName
+	}
+
+	return fieldName
 }

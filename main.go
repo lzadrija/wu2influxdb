@@ -58,18 +58,18 @@ func main() {
 	}
 
 	// prepare InfluxDB metric fields
-	fields := buildMetricsFields(fieldList, jsonTags, &res.WeatherMessage)
+	fieldValuesByName := buildMetricsFields(fieldList, jsonTags, &res.WeatherMessage)
 
 	if *debug {
-		fmt.Fprintf(os.Stderr, "Dumping InfluxDB fields structure:\n%v\n\nWill not publish to InfluxDB in debug mode. Exiting.\n",
-			aToFloat(fields))
+		fmt.Fprintf(os.Stderr,
+			"Dumping InfluxDB fields structure:\n%v\n\nWill not publish to InfluxDB in debug mode. Exiting.\n", fieldValuesToFloat(fieldValuesByName))
 		os.Exit(1)
 	}
 
-	c := InfluxDBClient(influxDBHost, influxDBUser, influxDBPassword)
-	defer c.Close()
+	influxDbClient := InfluxDBClient(influxDBHost, influxDBUser, influxDBPassword)
+	defer influxDbClient.Close()
 
-	InfluxDBPublishPoints(c, fields, influxDBName, pwsName)
+	InfluxDBPublishPoints(influxDbClient, fieldValuesByName, influxDBName, pwsName)
 }
 
 func flagsCheck(debug *bool, apiKey, pwsName, fieldList, influxDBHost, influxDBName *string) {
